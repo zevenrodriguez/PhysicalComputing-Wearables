@@ -2,37 +2,35 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""CircuitPython Essentials Audio Out tone example"""
 import time
 import array
 import math
 import board
-import digitalio
-from audiocore import RawSample
+import audiobusio
 
-try:
-    from audioio import AudioOut
-except ImportError:
-    try:
-        from audiopwmio import PWMAudioOut as AudioOut
-    except ImportError:
-        pass  # not always supported by every board!
 
-button = digitalio.DigitalInOut(board.A1)
-button.switch_to_input(pull=digitalio.Pull.UP)
+# Remove DC bias before computing RMS.
+def mean(values):
+    return sum(values) / len(values)
 
-tone_volume = 0.1  # Increase this to increase the volume of the tone.
-frequency = 440  # Set this to the Hz of the tone you want to generate.
-length = 8000 // frequency
-sine_wave = array.array("H", [0] * length)
-for i in range(length):
-    sine_wave[i] = int((1 + math.sin(math.pi * 2 * i / length)) * tone_volume * (2 ** 15 - 1))
 
-audio = AudioOut(board.A0)
-sine_wave_sample = RawSample(sine_wave)
+def normalized_rms(values):
+    minbuf = int(mean(values))
+    samples_sum = sum(
+        float(sample - minbuf) * (sample - minbuf)
+        for sample in values
+    )
+
+    return math.sqrt(samples_sum / len(values))
+
+
+# Main program
+mic = audiobusio.PDMIn(board.MICROPHONE_CLOCK, board.MICROPHONE_DATA, sample_rate=16000, bit_depth=16)
+samples = array.array('H', [0] * 160)
+
 
 while True:
-    if not button.value:
-        audio.play(sine_wave_sample, loop=True)
-        time.sleep(1)
-        audio.stop()
+    mic.record(samples, len(samples))
+    magnitude = normalized_rms(samples)
+    print((magnitude,))
+    time.sleep(0.1)
