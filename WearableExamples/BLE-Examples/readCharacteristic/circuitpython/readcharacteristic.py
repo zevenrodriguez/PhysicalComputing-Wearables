@@ -10,6 +10,7 @@ import time
 ble = BLERadio()
 uart = UARTService()
 advertisement = ProvideServicesAdvertisement(uart)
+print(uart.uuid)
 
 while True:
     ble.start_advertising(advertisement)
