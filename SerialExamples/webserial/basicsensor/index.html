@@ -1,0 +1,81 @@
+<!-- https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-webserial-output-from-p5-js/ -->
+<!-- https://github.com/gohai/p5.webserial -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
+    <script src="https://unpkg.com/@gohai/p5.webserial@^1/libraries/p5.webserial.js"></script>
+</head>
+
+<body>
+
+    <script>
+        let port;
+        let connectBtn;
+        let baudRate = 115200;
+        let currentValue = 0;
+        let prevString = "";
+
+        function setup() {
+            createCanvas(400, 400);
+            background(220);
+
+            port = createSerial();
+            connectBtn = createButton("Connect to Adafruit");
+            connectBtn.mousePressed(connectBtnClick);
+
+            // in setup, we can open ports we have used previously
+            // without user interaction
+            let usedPorts = usedSerialPorts();
+            if (usedPorts.length > 0) {
+                port.open(usedPorts[0], baudRate);
+                connectBtn.html("Disconnect");
+                //connectBtn.hide();
+            }
+
+            
+        }
+
+        function draw() {
+            background(220);
+
+            
+            let str = port.readUntil("\n");
+            if (str.length > 0 && str != prevString) {
+                //text(str, 10, 10);
+                currentValue = parseFloat(str);
+                prevString = str;
+            }
+            fill(0);
+            text(currentValue, 10, 20);
+
+            // Map the current value to a size range for the ellipse
+            let ellipseSize = map(currentValue, 0, 255, 10, 300);
+            // Draw ellipse in the center, scaled by the mapped value
+            ellipse(width/2, height/2, ellipseSize, ellipseSize);
+            
+        }
+
+        function connectBtnClick() {
+            if (connectBtn.html() != "Disconnect") {
+                port.open("Adafruit", baudRate);
+                connectBtn.html("Disconnect");
+                //connectBtn.hide();
+            } else {
+                port.clear();
+                port.close();
+                connectBtn.html("Connect to Board");
+            }
+        }
+
+      
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,87 @@
+<!-- https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-webserial-output-from-p5-js/ -->
+<!-- https://github.com/gohai/p5.webserial -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
+<script src="https://unpkg.com/p5ble@0.0.7/dist/p5.ble.js" type="text/javascript"></script>
+</head>
+
+<body>
+
+    <script>
+        const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+        const NUS_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write here
+        const NUS_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notifications from here
+
+        let myBLE;
+        let rxChar, txChar;
+        let sensorReading = 0;
+        let ledState = false;
+
+        function setup() {
+            createCanvas(400, 300);
+            myBLE = new p5ble();
+            let btn = createButton('Connect via BLE');
+            btn.mousePressed(() => myBLE.connect(NUS_SERVICE, gotCharacteristics));
+        }
+
+        function gotCharacteristics(error, characteristics) {
+            if (error) { console.error(error); return; }
+
+            for (let c of characteristics) {
+                const uuid = c.uuid.toLowerCase();
+                if (uuid === NUS_RX) rxChar = c;
+                if (uuid === NUS_TX) txChar = c;
+            }
+
+            if (txChar) myBLE.startNotifications(txChar, onData, 'string');
+        }
+
+        function onData(data) {
+            // Board sends "123\n" — parse the number
+            sensorReading = parseInt(data.trim());
+        }
+
+        function sendLEDCommand(on) {
+            if (!rxChar) return;
+            ledState = on;
+            myBLE.write(rxChar, on ? 'LED_ON\n' : 'LED_OFF\n');
+        }
+
+        function draw() {
+            background(30);
+
+            // Sensor bar
+            fill(0, 180, 120);
+            noStroke();
+            rect(40, 60, map(sensorReading, 0, 255, 0, 320), 40, 6);
+            fill(255);
+            textSize(14);
+            textAlign(LEFT);
+            text(`Sensor: ${sensorReading}`, 40, 130);
+
+            // LED toggle circle
+            fill(ledState ? '#ffcc00' : '#555');
+            ellipse(200, 210, 60, 60);
+            fill(255);
+            textAlign(CENTER);
+            text(ledState ? 'LED ON' : 'LED OFF', 200, 265);
+        }
+
+        function mousePressed() {
+            if (dist(mouseX, mouseY, 200, 210) < 30) {
+                sendLEDCommand(!ledState);
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
