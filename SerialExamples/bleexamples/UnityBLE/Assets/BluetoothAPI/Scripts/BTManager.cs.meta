@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 554b8885956d347e7b3ed5627b1ae589
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Scripts/BTManager.cs
+  uploadId: 618052

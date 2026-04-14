@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d3869576eebf24a8ebf3f01dca437a8d
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Samples/Led On Off/readme.txt
+  uploadId: 618052

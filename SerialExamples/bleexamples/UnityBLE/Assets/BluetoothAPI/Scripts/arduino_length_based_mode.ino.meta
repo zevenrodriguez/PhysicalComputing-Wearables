@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: dbc1dfde8eb7d47e08f1cabfd699a8e0
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Scripts/arduino_length_based_mode.ino
+  uploadId: 618052

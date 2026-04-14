@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 251f21c7dfb164393b5e2023b9cf508f
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Scenes/main2.unity
+  uploadId: 618052

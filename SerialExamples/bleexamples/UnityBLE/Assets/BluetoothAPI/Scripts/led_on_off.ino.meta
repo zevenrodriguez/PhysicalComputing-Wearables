@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 6b3b5814659b34e96b8b186dbcd2ea1e
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Scripts/led_on_off.ino
+  uploadId: 618052

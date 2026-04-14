@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a1412612349364e7081f5102076f63a2
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Scripts/arduino_char_terminator.ino
+  uploadId: 618052

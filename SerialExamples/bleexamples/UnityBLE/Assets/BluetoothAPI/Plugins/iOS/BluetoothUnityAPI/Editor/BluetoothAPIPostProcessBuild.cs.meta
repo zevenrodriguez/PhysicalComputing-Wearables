@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 96fa36e1737ad46ecbb2efd2a8e37aff
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Plugins/iOS/BluetoothUnityAPI/Editor/BluetoothAPIPostProcessBuild.cs
+  uploadId: 618052

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 65f67dcd1c24d424abe8483884202f95
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Samples/Scan and Connect/Scan and Connect.unity
+  uploadId: 618052

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 762bc68ba8edb4cdb84f35854c9a65b2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Samples/Led On Off/LedOnOffManager.cs
+  uploadId: 618052

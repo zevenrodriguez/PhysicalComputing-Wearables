@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a6bd98c5c44404e9283829894276e9b2
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 98960
+  packageName: Arduino Bluetooth Plugin
+  packageVersion: 5.6.4
+  assetPath: Assets/BluetoothAPI/Samples/BLE/main.js.txt
+  uploadId: 618052
