@@ -4,6 +4,7 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 #if WINDOWS_UWP
 using Windows.Devices.Bluetooth;
@@ -16,9 +17,10 @@ using System;
 public class WindowsBLEManager : MonoBehaviour
 {
     [Header("UI")]
-    public Button ledOnButton;
-    public Button ledOffButton;
-    public Text bleMessageText;
+    [SerializeField] private Button ledOnButton;
+    [SerializeField] private Button ledOffButton;
+    [SerializeField] private Button connectToggleButton;
+    [SerializeField] private TMP_Text bleMessageText;
 
     [Header("Live Data")]
     public int proximityValue = 0;
@@ -42,9 +44,43 @@ public class WindowsBLEManager : MonoBehaviour
 
     void Start()
     {
-        if (ledOnButton)  ledOnButton.onClick.AddListener(SendLEDOn);
-        if (ledOffButton) ledOffButton.onClick.AddListener(SendLEDOff);
-        StartScanning();
+        if (ledOnButton)        ledOnButton.onClick.AddListener(SendLEDOn);
+        if (ledOffButton)       ledOffButton.onClick.AddListener(SendLEDOff);
+        if (connectToggleButton) connectToggleButton.onClick.AddListener(ToggleConnection);
+        UpdateConnectButtonLabel();
+    }
+
+    private void UpdateConnectButtonLabel()
+    {
+        if (connectToggleButton == null) return;
+        var label = connectToggleButton.GetComponentInChildren<TMP_Text>();
+        if (label) label.text = connected ? "Disconnect" : "Connect";
+    }
+
+    public void ToggleConnection()
+    {
+        if (connected) Disconnect();
+        else Connect();
+    }
+
+    public void Connect()
+    {
+        if (!connected)
+        {
+            StartScanning();
+            UpdateConnectButtonLabel();
+        }
+    }
+
+    public void Disconnect()
+    {
+        if (!connected) return;
+        watcher?.Stop();
+        txCharacteristic = null;
+        rxCharacteristic = null;
+        connected = false;
+        Debug.Log("BLE Disconnected.");
+        UpdateConnectButtonLabel();
     }
 
     void StartScanning()
@@ -92,6 +128,8 @@ public class WindowsBLEManager : MonoBehaviour
 
         connected = true;
         Debug.Log("BLE Connected and subscribed!");
+        lock (valueLock) { pendingMessage = null; }
+        UnityEngine.WSA.Application.InvokeOnAppThread(UpdateConnectButtonLabel, false);
     }
 
     private void OnValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
