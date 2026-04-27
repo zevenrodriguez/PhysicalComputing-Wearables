@@ -9,10 +9,24 @@ from max30102 import MAX30102
 import busio
 
 class LockingI2C:
-    """Wraps CircuitPython I2C to auto-lock, making it compatible with
-    MicroPython-style drivers that don't call try_lock themselves."""
     def __init__(self, i2c):
         self._i2c = i2c
+
+    def writeto(self, addr, buf, **kwargs):
+        while not self._i2c.try_lock():
+            pass
+        try:
+            self._i2c.writeto(addr, buf, **kwargs)
+        finally:
+            self._i2c.unlock()
+
+    def readfrom_into(self, addr, buf, **kwargs):
+        while not self._i2c.try_lock():
+            pass
+        try:
+            self._i2c.readfrom_into(addr, buf, **kwargs)
+        finally:
+            self._i2c.unlock()
 
     def readfrom_mem_into(self, addr, reg, buf):
         while not self._i2c.try_lock():
@@ -30,7 +44,7 @@ class LockingI2C:
             self._i2c.writeto(addr, bytes([reg]) + bytes(data))
         finally:
             self._i2c.unlock()
-
+            
 # Then use it like this:
 raw_i2c = busio.I2C(board.SCL, board.SDA)
 sensor = MAX30102(i2c=LockingI2C(raw_i2c))
