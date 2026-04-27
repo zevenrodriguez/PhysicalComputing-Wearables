@@ -4,7 +4,7 @@ import digitalio
 from adafruit_ble import BLERadio
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.nordic import UARTService
-from adafruit_max3010x import MAX30105
+from max30102 import MAX30102
 
 # --- BLE Setup ---
 ble  = BLERadio()
@@ -18,58 +18,60 @@ led.direction = digitalio.Direction.OUTPUT
 
 # --- MAX30102 Setup ---
 i2c = board.I2C()
-sensor = MAX30105(i2c)
-sensor.setup_sensor()
-sensor.set_led_mode(2)          # Red + IR LEDs
-sensor.set_sample_rate(400)     # 400 samples/sec
-sensor.set_pulse_width(411)     # Max resolution
-sensor.set_led_amplitude(0x1F)  # LED brightness (0x00–0xFF)
+sensor = MAX30102(i2c=i2c)
+sensor.setup_sensor()                          # defaults: LED mode 2, 400Hz, 8x avg, pw 411
+sensor.set_active_leds_amplitude(0x1F)         # ~6.4mA, good for finger contact
 
 # --- Heart Rate Detection State ---
-IR_THRESHOLD    = 50000   # Minimum IR value — finger must be on sensor
-PEAK_MIN_DELTA  = 500     # IR must rise by this much to count as a beat
-SAMPLE_WINDOW   = 10      # Number of beat intervals to average over
+IR_THRESHOLD  = 50000   # Below this = no finger on sensor
+PEAK_MIN_FALL = 1000    # IR must drop this much after a peak to reset detector
+SAMPLE_WINDOW = 10      # Beat intervals to average for BPM
 
-ir_buffer       = []
-buffer_size     = 20       # Rolling window for smoothing
-peak_times      = []       # Timestamps of detected beats
-last_was_peak   = False
-last_peak_val   = 0
-current_bpm     = 0
+ir_buffer     = []
+SMOOTH_SIZE   = 16      # Rolling average window
+peak_times    = []
+in_peak       = False
+peak_val      = 0
+current_bpm   = 0
 
 
-def smooth(buf):
+def smooth_ir(buf):
     return sum(buf) / len(buf) if buf else 0
 
 
-def detect_beat(ir_val, timestamp):
-    """Simple peak detector. Returns True if a beat is detected."""
-    global last_was_peak, last_peak_val
+def detect_beat(ir_smoothed, now):
+    """
+    Simple threshold peak detector on the smoothed IR signal.
+    Returns True on the rising edge of each beat.
+    """
+    global in_peak, peak_val
 
-    if ir_val > IR_THRESHOLD:
-        if not last_was_peak and ir_val > last_peak_val + PEAK_MIN_DELTA:
-            last_was_peak = True
-            last_peak_val = ir_val
-            return True
-        elif ir_val < last_peak_val - PEAK_MIN_DELTA:
-            last_was_peak = False
-            last_peak_val = ir_val
+    if ir_smoothed < IR_THRESHOLD:
+        # No finger — reset state
+        in_peak  = False
+        peak_val = 0
+        return False
+
+    if not in_peak:
+        if ir_smoothed > peak_val:
+            peak_val = ir_smoothed          # Track rising signal
+        else:
+            # Signal started falling — we just passed a peak
+            in_peak = True
+            return True                     # Beat detected!
     else:
-        # No finger detected — reset
-        last_was_peak = False
-        last_peak_val = 0
+        if ir_smoothed < peak_val - PEAK_MIN_FALL:
+            # Signal has fallen enough — ready to detect next peak
+            in_peak  = False
+            peak_val = ir_smoothed
 
     return False
 
 
 def calculate_bpm():
-    """Calculate BPM from the last SAMPLE_WINDOW beat intervals."""
     if len(peak_times) < 2:
         return 0
-    intervals = [
-        peak_times[i] - peak_times[i - 1]
-        for i in range(1, len(peak_times))
-    ]
+    intervals = [peak_times[i] - peak_times[i - 1] for i in range(1, len(peak_times))]
     avg_interval = sum(intervals) / len(intervals)
     return int(60.0 / avg_interval) if avg_interval > 0 else 0
 
@@ -96,42 +98,45 @@ while True:
             elif msg == "LED_OFF":
                 led.value = False
 
-        # Read IR from MAX30102
-        sensor.read_sensor()
-        ir = sensor.ir
+        # Poll the sensor FIFO
+        sensor.check()
 
-        # Smooth the IR signal
-        ir_buffer.append(ir)
-        if len(ir_buffer) > buffer_size:
-            ir_buffer.pop(0)
-        ir_smooth = smooth(ir_buffer)
+        if sensor.available():
+            red_sample = sensor.pop_red_from_storage()
+            ir_sample  = sensor.pop_ir_from_storage()
 
-        now = time.monotonic()
+            # Smooth the IR signal
+            ir_buffer.append(ir_sample)
+            if len(ir_buffer) > SMOOTH_SIZE:
+                ir_buffer.pop(0)
+            ir_smoothed = smooth_ir(ir_buffer)
 
-        # Beat detection
-        if detect_beat(ir_smooth, now):
-            peak_times.append(now)
-            if len(peak_times) > SAMPLE_WINDOW + 1:
-                peak_times.pop(0)
+            now = time.monotonic()
 
-            new_bpm = calculate_bpm()
+            if detect_beat(ir_smoothed, now):
+                peak_times.append(now)
+                if len(peak_times) > SAMPLE_WINDOW + 1:
+                    peak_times.pop(0)
 
-            # Only send if BPM is in a plausible human range
-            if 40 <= new_bpm <= 200 and new_bpm != current_bpm:
-                current_bpm = new_bpm
-                print(f"Heart Rate: {current_bpm} BPM")
-                uart.write(f"{current_bpm}\n".encode())
-                led.value = True   # Flash LED on each beat
-                time.sleep(0.05)
-                led.value = False
+                new_bpm = calculate_bpm()
 
-        elif ir_smooth < IR_THRESHOLD:
-            # No finger — notify client
-            if current_bpm != 0:
+                # Sanity-check: only send plausible human heart rates
+                if 40 <= new_bpm <= 200 and new_bpm != current_bpm:
+                    current_bpm = new_bpm
+                    print(f"BPM: {current_bpm}")
+                    uart.write(f"{current_bpm}\n".encode())
+
+                    # Flash LED on beat
+                    led.value = True
+                    time.sleep(0.05)
+                    led.value = False
+
+            elif ir_smoothed < IR_THRESHOLD and current_bpm != 0:
+                # Finger removed — notify client
                 current_bpm = 0
+                peak_times.clear()
+                ir_buffer.clear()
                 print("No finger detected")
                 uart.write("0\n".encode())
-
-        time.sleep(0.005)  # ~200 Hz poll rate
 
     print("Disconnected.")
