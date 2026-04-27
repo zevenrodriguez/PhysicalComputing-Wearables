@@ -6,6 +6,36 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.nordic import UARTService
 from max30102 import MAX30102
 
+import busio
+
+class LockingI2C:
+    """Wraps CircuitPython I2C to auto-lock, making it compatible with
+    MicroPython-style drivers that don't call try_lock themselves."""
+    def __init__(self, i2c):
+        self._i2c = i2c
+
+    def readfrom_mem_into(self, addr, reg, buf):
+        while not self._i2c.try_lock():
+            pass
+        try:
+            self._i2c.writeto(addr, bytes([reg]))
+            self._i2c.readfrom_into(addr, buf)
+        finally:
+            self._i2c.unlock()
+
+    def writeto_mem(self, addr, reg, data):
+        while not self._i2c.try_lock():
+            pass
+        try:
+            self._i2c.writeto(addr, bytes([reg]) + bytes(data))
+        finally:
+            self._i2c.unlock()
+
+# Then use it like this:
+raw_i2c = busio.I2C(board.SCL, board.SDA)
+sensor = MAX30102(i2c=LockingI2C(raw_i2c))
+sensor.setup_sensor()
+
 # --- BLE Setup ---
 ble  = BLERadio()
 uart = UARTService()
@@ -17,9 +47,9 @@ led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
 
 # --- MAX30102 Setup ---
-i2c = board.I2C()
-sensor = MAX30102(i2c=i2c)
-sensor.setup_sensor()                          # defaults: LED mode 2, 400Hz, 8x avg, pw 411
+#i2c = board.I2C()
+#sensor = MAX30102(i2c=i2c)
+#sensor.setup_sensor()                          # defaults: LED mode 2, 400Hz, 8x avg, pw 411
 sensor.set_active_leds_amplitude(0x1F)         # ~6.4mA, good for finger contact
 
 # --- Heart Rate Detection State ---
