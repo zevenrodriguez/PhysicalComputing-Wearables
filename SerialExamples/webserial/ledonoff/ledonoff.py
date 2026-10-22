@@ -23,7 +23,10 @@ while True:
             buffer += data
             while b"\n" in buffer:
                 line, buffer = buffer.split(b"\n", 1)
-                text = line.decode("utf-8", errors="ignore").strip()
+                try:
+                    text = line.decode("utf-8").strip()
+                except UnicodeError:
+                    text = ""
                 if text == "LED_ON":
                     led.value = True
                     serial.write(b"LED is ON\r\n")
